@@ -33,6 +33,7 @@ import time
 import datetime
 import json
 import inspect
+from websocket import create_connection
 
 # https://stackoverflow.com/questions/53978542/how-to-use-collections-abc-from-both-python-3-8-and-python-2-7
 try:
@@ -658,6 +659,7 @@ class dool_aio(dstat):
 
 class dool_cpu(dstat):
     def __init__(self):
+        self.id = 'cpu'
         self.nick  = ( 'usr', 'sys', 'idl', 'wai', 'stl' )
         self.type  = 'p'
         self.width = 3
@@ -693,14 +695,14 @@ class dool_cpu(dstat):
         return ret
 
     def name(self):
-        return "cpu"
-        # ret = []
-        # for name in self.vars:
-        #     if name == 'total':
-        #         ret.append('total cpu usage')
-        #     else:
-        #         ret.append('cpu' + name + ' usage')
-        # return ret
+        # return "cpu"
+        ret = []
+        for name in self.vars:
+            if name == 'total':
+                ret.append('total cpu usage')
+            else:
+                ret.append('cpu' + name + ' usage')
+        return ret
 
     def extract(self):
         for l in self.splitlines():
@@ -2187,7 +2189,8 @@ def cprintlist(varlist, ctype, width, scale):
 
 def cprint(var, ctype = 'f', width = 4, scale = 1000):
     "Color print one column"
-
+    if(isinstance(var,str)):
+        return var
     base = 1000
     if scale == 1024:
         base = 1024
@@ -2199,7 +2202,7 @@ def cprint(var, ctype = 'f', width = 4, scale = 1000):
         width = width - 1
 
     ### If this is a negative value, return a dash
-    if ctype != 's' and var < 0:
+    if ctype != 's' and type(var) == 'int' and var < 0:
         if unit:
             return theme['error'] + '-'.rjust(width) + char['space'] + theme['default']
         else:
@@ -2886,7 +2889,7 @@ def perform(update):
         ob = {"starttime_second": starttime_second}
         for o in totlist:
             o.extract()
-            ob[o.name] = o.showjson()
+            ob[o.id] = o.showjson()
             if o in vislist:
                 line = line + o.show() + o.showend(totlist, vislist)
             if op.output and step == op.delay:
@@ -2934,7 +2937,6 @@ def send_to_kafka(message):
             key=socket.gethostname(), 
              # 同一个key值，会被送至同一个分区
             value=json.dumps(message))  # 向分区1发送消息
-    print(json.dumps(message))
 
 # Borrowed from: https://stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python
 def stripcolor(self, mystr):
