@@ -18,4 +18,4 @@ Workdir /mnt/dool
 
 # ./dool --filecoin-sectors-status
 
-# python3 ./dool --filecoin-sectors-status -c -C 0,1
+# python3 ./dool -t -c -m -s -n -d --thermal --filecoin-sectors-status 60

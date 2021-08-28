@@ -837,6 +837,7 @@ class dool_cpu24(dstat):
 
 class dool_disk(dstat):
     def __init__(self):
+        self.id       = 'disk'
         self.nick       = ('read', 'writ')
         self.type       = 'b'
         self.diskfilter = re.compile('^([hsv]d[a-z]+\d+|cciss/c\d+d\d+p\d+|dm-\d+|md\d+|mmcblk\d+p\d0|VxVM\d+)$')
@@ -1375,6 +1376,7 @@ class dool_lock(dstat):
 
 class dool_mem(dstat):
     def __init__(self):
+        self.id = 'memory'
         self.name = 'memory'
         self.nick = ('used', 'free', 'buff', 'cach')
         self.vars = ('MemUsed', 'MemFree', 'Buffers', 'Cached')
@@ -1408,6 +1410,7 @@ class dool_mem_adv(dool_mem):
 
 class dool_net(dstat):
     def __init__(self):
+        self.id        = 'network'
         self.nick        = ('recv', 'send')
         self.type        = 'b'
         self.totalfilter = re.compile('^(lo|bond\d+|face|.+\.\d+)$')
@@ -1579,6 +1582,7 @@ class dool_socket(dstat):
 
 class dool_swap(dstat):
     def __init__(self):
+        self.id = 'swap'
         self.name = 'swap'
         self.nick = ('used', 'free')
         self.type = 'd'
@@ -1693,6 +1697,7 @@ class dool_tcp(dstat):
 
 class dool_time(dstat):
     def __init__(self):
+        self.id = 'time'
         self.name = 'system'
         #self.timefmt = os.getenv('DSTAT_TIMEFMT') or '%d-%m %H:%M:%S'
         self.timefmt = os.getenv('DSTAT_TIMEFMT') or '%b-%d %H:%M:%S'
