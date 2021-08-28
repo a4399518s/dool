@@ -30,6 +30,7 @@ import resource
 import sched
 import sys
 import time
+import datetime
 import json
 import inspect
 
@@ -600,7 +601,6 @@ class dstat:
     def showjson(self):
         object = {}
         name = self.name
-        print(name)
         for i, name in enumerate(self.vars):
             if isinstance(self.val[name], list) or isinstance(self.val[name], tuple):
                 object[name] = {}
@@ -894,7 +894,8 @@ class dool_disk(dstat):
         return ret
 
     def name(self):
-        return ['dsk/'+sysfs_dev(name) for name in self.vars]
+        return 'dsk'
+        # return ['dsk/'+sysfs_dev(name) for name in self.vars]
 
     def extract(self):
         for name in self.vars: self.set2[name] = (0, 0)
@@ -1296,7 +1297,8 @@ class dool_io(dstat):
         return ret
 
     def name(self):
-        return ['io/'+name for name in self.vars]
+        return "io";
+        # return ['io/'+name for name in self.vars]
 
     def extract(self):
         for name in self.vars: self.set2[name] = (0, 0)
@@ -1371,7 +1373,7 @@ class dool_lock(dstat):
 
 class dool_mem(dstat):
     def __init__(self):
-        self.name = 'memory usage'
+        self.name = 'memory'
         self.nick = ('used', 'free', 'buff', 'cach')
         self.vars = ('MemUsed', 'MemFree', 'Buffers', 'Cached')
         self.open('/proc/meminfo')
@@ -1440,7 +1442,8 @@ class dool_net(dstat):
         return ret
 
     def name(self):
-        return ['net/'+name for name in self.vars]
+        return 'net'
+        # return ['net/'+name for name in self.vars]
 
     def extract(self):
         self.set2['total'] = [0, 0]
@@ -2798,6 +2801,8 @@ def perform(update):
         global loop, step, missed
 
         starttime = time.time()
+        now = datetime.datetime.now()
+        starttime_second =int(time.mktime(now.timetuple()))
 
         loop = int((update - 1 + op.delay) / op.delay)
         step = ((update - 1) % op.delay) + 1
@@ -2878,7 +2883,7 @@ def perform(update):
         ### Calculate all objects (visible, invisible)
         line = newline
         oline = ''
-        ob = {}
+        ob = {"starttime_second": starttime_second}
         for o in totlist:
             o.extract()
             ob[o.name] = o.showjson()
@@ -2889,8 +2894,8 @@ def perform(update):
         ### Print stats
         sys.stdout.write(line + theme['input'])
         if op.output and step == op.delay:
-            ###FIXME 每行打印
-            print(json.dumps(ob,indent=2,sort_keys=True))
+            ###FIXME 消息输出kafka
+            send_to_kafka(ob)
             outputfile.write(oline + '\n')
 #            outputfile.flush()
 
@@ -2914,6 +2919,22 @@ def perform(update):
         ### Finish the line
         if not op.update:
             sys.stdout.write('\n')
+
+from kafka import KafkaProducer
+from kafka.errors import kafka_errors
+import socket
+producer = KafkaProducer(
+        bootstrap_servers=['192.168.10.77:9092'], 
+        key_serializer=lambda k: json.dumps(k).encode(),
+        value_serializer=lambda v: json.dumps(v).encode())
+
+def send_to_kafka(message):
+    future = producer.send(
+            'monitor_dool',
+            key=socket.gethostname(), 
+             # 同一个key值，会被送至同一个分区
+            value=json.dumps(message))  # 向分区1发送消息
+    print(json.dumps(message))
 
 # Borrowed from: https://stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python
 def stripcolor(self, mystr):
