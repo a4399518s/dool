@@ -694,13 +694,13 @@ class dool_cpu(dstat):
 
     def name(self):
         return "cpu"
-        ret = []
-        for name in self.vars:
-            if name == 'total':
-                ret.append('total cpu usage')
-            else:
-                ret.append('cpu' + name + ' usage')
-        return ret
+        # ret = []
+        # for name in self.vars:
+        #     if name == 'total':
+        #         ret.append('total cpu usage')
+        #     else:
+        #         ret.append('cpu' + name + ' usage')
+        # return ret
 
     def extract(self):
         for l in self.splitlines():
